@@ -6,6 +6,7 @@
 import mpl_toolkits.mplot3d as mpl
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 
 # importing data for model_A_spherical_halo_BW2018b
 
@@ -19,7 +20,7 @@ m,x,y,z,vx,vy,vz = np.loadtxt(loadfilepath,skiprows=1,unpack= True)
 # make plots of x-y,x-z,y-z planes, and x-vx, y-vy, z-vz
 
 # x-y plane
-plt.hist2d(x, y,bins=50,cmap='Blues')
+plt.hist2d(x, y,bins=50,cmap='Blues',  norm=LogNorm())
 plt.ylabel("y [kpc]")
 plt.xlabel("x [kpc]")
 plt.title("x-y plane of model_A_spherical_halo_BW2018b")
@@ -30,7 +31,7 @@ plt.savefig(fullFileName)
 plt.clf() 
 
 #x-z plane
-plt.hist2d(x, z,bins=50,cmap='Blues')
+plt.hist2d(x, z,bins=50,cmap='Blues', norm=LogNorm())
 plt.ylabel("z [kpc]")
 plt.xlabel("x [kpc]")
 plt.title("x-z plane of model_A_spherical_halo_BW2018b")
@@ -41,7 +42,7 @@ plt.savefig(fullFileName)
 plt.clf() 
 
 #y-z plane 
-plt.hist2d(y, z,bins=50,cmap='Blues')
+plt.hist2d(y, z,bins=50,cmap='Blues', norm=LogNorm())
 plt.ylabel("y [kpc]")
 plt.xlabel("z [kpc]")
 plt.title("y-z plane of model_A_spherical_halo_BW2018b")
@@ -52,7 +53,7 @@ plt.savefig(fullFileName)
 plt.clf() 
 
 # x-vx
-plt.hist2d(x, vx,bins=40,cmap='Blues')
+plt.hist2d(x, vx,bins=40,cmap='Blues', norm=LogNorm())
 plt.ylabel("vx [100 km/s]")
 plt.xlabel("x [kpc]")
 plt.title("x-vx position velocity distribution")
@@ -63,10 +64,10 @@ plt.savefig(fullFileName)
 plt.clf() 
 
 # y-vy
-plt.hist2d(y, vy,bins=40,cmap='Blues')
+plt.hist2d(y, vy,bins=40,cmap='Blues' ,norm=LogNorm())
 plt.ylabel("vy [100 km/s]")
 plt.xlabel("y [kpc]")
-plt.title("x-vx position velocity distribution")
+plt.title("y-vy position velocity distribution")
 cbar = plt.colorbar()
 cbar.ax.set_ylabel('Counts')
 fullFileName= "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/model_A_spherical_halo_BW2018b_plots/y-vy_pos_vel_dist.eps"
@@ -74,7 +75,7 @@ plt.savefig(fullFileName)
 plt.clf() 
 
 # z-vz
-plt.hist2d(z, vz,bins=40,cmap='Blues')
+plt.hist2d(z, vz,bins=40,cmap='Blues',norm=LogNorm())
 plt.ylabel("vz [100 km/s]")
 plt.xlabel("z [kpc]")
 plt.title("z-vz position velocity distribution")
