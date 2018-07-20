@@ -184,7 +184,7 @@ plt.savefig(savefilepath5)
 #plt.show()
 plt.clf()
 
-#### MEX potential (specific case l=0) ####
+#### MEX potential (specific case l=0) ####  #ROUTINE CURRENTLY NOT WORKING
 
 # function for integral1 
 func1 = density*bincenters**2
