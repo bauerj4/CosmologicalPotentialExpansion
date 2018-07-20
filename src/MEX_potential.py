@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import scipy.optimize as scip
 plt.rcParams['agg.path.chunksize'] = 100000000
 import scipy.special as special 
+import scipy.integrate as integrate
 
 # controls the parameters of the density profile edited for specific halos
 # change as needed
@@ -24,7 +25,7 @@ m,x,y,z,vx,vy,vz = np.loadtxt(loadhalopath,skiprows=1,unpack= True)
 galaxy = "model_A_spherical_halo_BW2018b"
 
 # number of bins for radial binning ( # of bins is n-1)
-n = 27
+n = 51
 
 
 # file paths for saving density profile fit and parmaters / potnential
@@ -61,14 +62,14 @@ r = (x**2+y**2+z**2)**(0.5)
 # r is the radius of the particles in units of kpc 
                                                    
 # max radial bin                                   
-m = np.log10(max(r))                               
+max_bin = np.log10(max(r))                               
 
 # make logarithimically spaced bins for histograms 
-linear_space = np.linspace(0,m,n)
+linear_space = np.linspace(0,max_bin,n)
 log_bins = 10**(linear_space)
 bincenters = 0.5*(log_bins[1:]+log_bins[:-1])
 
-# bin the data 
+# bin the data
 counts, bins, patches = plt.hist(r,bins=log_bins)
 plt.clf()
 # counts is the counts in each bin
@@ -115,7 +116,9 @@ plt.savefig(savefilepath1)
 #plt.show()
 plt.clf()
 
-#### MEX potential (specific case l=0) ####
+
+
+#### MEX potential (specific case l=0)
 
 # function for integral1 
 func1 = density*bincenters**2
@@ -124,60 +127,45 @@ func2 = density*bincenters
 
 #numerically integrating each term using trapezoid rule
 
-# Term 1 of potenetil at each bincenter
-x = 0 
-int1vals = []
-int1vals_running_sum = []
-while x != len(bincenters)-1 : 
- 	value1 = ((func1[x+1]+func1[x])/2)*(bincenters[x+1]-bincenters[x])
- 	int1vals.append(value1)
- 	sum_int1vals = sum(int1vals)
- 	int1vals_running_sum.append(sum_int1vals)
- 	x += 1 
+#term 1
 
+int1valrunningsum = integrate.cumtrapz(func1,bincenters)
 
-# Term 2 of potential at each bincenter
-x = 0 
-int2vals = []
-int2vals_running_sum = []
-while x != len(bincenters)-1 : 
-	value2 = ((func1[x+1]+func1[x])/2)*(bincenters[x+1]-bincenters[x])
-	int2vals.append(value1)
-	sum_int2vals = sum(int2vals)
-	int2vals_running_sum.append(sum_int2vals)
-	x += 1 
+# term 2 
+
+int2valrunningsum = integrate.cumtrapz(func2,bincenters)
 
 # now we compute the value of the integrals combining term 1 and 2 
 x = 0 
 combinedvals = []
 while x != len(bincenters)-1 : 
-	combval = int1vals_running_sum[x]/bincenters[x+1] + int2vals_running_sum[-x-1]
+	combval = int1valrunningsum[x]/bincenters[x+1] + int2valrunningsum[-x-1]
 	combinedvals.append(combval)
 	x +=1
 
 combinedvals = np.array(combinedvals)
 Phi_r = -4*np.pi*G*(combinedvals)*np.real(special.sph_harm(0,0,theta,phi))
 
-
+						
 
 #calculate analytic potential now using NFW profile fit parameters  
                                                                     
 def potential(x,rho_0,R_s):                                         
 	G=1																
-	phi_analytic = -(4*np.pi*G*rho_0*R_s**3*np.log(1+x/R_s))/x				 
+	phi_analytic = -(4*np.pi*G*np.real(special.sph_harm(0,0,theta,phi))*rho_0*R_s**3*np.log(1+x/R_s))/x				 
 	return phi_analytic											
 																	
 phi_analytic = potential(r,rho_02,R_s2)							    
 																	
 
-# plot of potential from integral and from fit (not saved)																	
+# plot of potential from integral and from fit																
 plt.plot(r,phi_analytic,"o",label='from fit')
 plt.plot(bincenters[1:],Phi_r,label='from integral')										
 plt.xlabel(r"$r$ [kpc]")											
 plt.ylabel(r'$\Phi$')	
 plt.title("Analytic potential and from integral, $l=0$")
 plt.legend(fontsize = '8')
-plt.savefig(savefilepath2)
+plt.savefig(savefilepath3)
 #plt.show()
 plt.clf()
 											
@@ -187,14 +175,11 @@ plt.plot(bincenters[1:],Phi_r)
 plt.xlabel(r"$r$ [kpc]")
 plt.ylabel(r'$\Phi$')
 plt.title("from integral, $l=0$ case")
-plt.savefig(savefilepath3)
+plt.savefig(savefilepath2)
 #plt.show()
 plt.clf()
 
 # general case (l not neccicarily zero)
-
-
-
 
 
 
