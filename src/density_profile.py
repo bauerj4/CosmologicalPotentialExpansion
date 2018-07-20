@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as scip
 plt.rcParams['agg.path.chunksize'] = 100000000
+import scipy.special as special 
 
 
 # controls the parameters of the density profile edited for specific halos
@@ -26,9 +27,9 @@ m,x,y,z,vx,vy,vz = np.loadtxt(loadhalopath,skiprows=1,unpack= True)
 galaxy = "model_A_spherical_halo_BW2018b"
 
 # number of bins for radial binning
-n = 11 
-# number of bins used to find fit paamters for analytic profile
-k = 25
+n = 28
+#number of bins used to find fit paramters for analytic profile
+k = 28
 
 # file paths for saving density profile plots
 #chnage file paths as required  
@@ -43,9 +44,25 @@ savefilepath3 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plot
 savefilepath4 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/density_profile_%s_densityprofilefitt_pointsecluded.eps" %(galaxy,galaxy)
 # best fit of desity profile overlayed log(rho) vs log(r) format without ignoring points
 savefilepath5 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/density_profile_%s_densityprofilefitt_nopointsexcluded.eps" %(galaxy,galaxy)
+# integral of potential spherical case
+savefilepath6 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/density_profile_%s_potential.eps" %(galaxy,galaxy)
+
+# MEX potentil (Binney and Tremaine integral (2-122), 1st Ed.)
+
+# format for sph_harm ... sph_harm(m,l,theta,phi)
+# theta runs from 0 to 2pi
+# phi runs from 0 to pi 
+
+G = 1
+l_max = 0
+
+# position on galaxy (in radians)
+theta = 0
+phi = 0
 
 
-#################### NO USER EDITING REQUIRED PAST THIS POINT ##############
+
+########################################################################################################################################################################
 
 ##### need to radially bin the the particles logarithimically #####
 
@@ -167,27 +184,86 @@ plt.savefig(savefilepath5)
 #plt.show()
 plt.clf()
 
+#### MEX potential (specific case l=0) ####
 
-print(popt1)
-print()
-print(popt2)
-print(pcov2)
-# calculate analytic potential now using NFW profile fit parameters
+# function for integral1 
+func1 = density*bincenters**2
+# function for integral2 
+func2 = density*bincenters
 
-def potential(x,rho_0,R_s):
-	G=1
-	phi = -(4*np.pi*G*rho_0*R_s**3*np.log(1+x/R_s))/x
-	return phi
+#numerically integrating each term using trapezoid rule
 
-phi = potential(r,rho_01,R_s1)
+# not needed trapcenters *********************
+#need to find center of trapezoids 
+trapcenters = 0.5*(bincenters[1:]+bincenters[:-1])
+
+# Term 1 of potenetil at each bincenter
+x = 0 
+int1vals = []
+int1vals_running_sum = []
+while x != len(bincenters)-1 : 
+ 	value1 = ((func1[x+1]+func1[x])/2)*(bincenters[x+1]-bincenters[x])
+ 	int1vals.append(value1)
+ 	sum_int1vals = sum(int1vals)
+ 	int1vals_running_sum.append(sum_int1vals)
+ 	x += 1 
+
+
+# Term 2 of potential at each bincenter
+x = 0 
+int2vals = []
+int2vals_running_sum = []
+while x != len(bincenters)-1 : 
+	value2 = ((func1[x+1]+func1[x])/2)*(bincenters[x+1]-bincenters[x])
+	int2vals.append(value1)
+	sum_int2vals = sum(int2vals)
+	int2vals_running_sum.append(sum_int2vals)
+	x += 1 
+
+# now we compute the value of the integrals combining term 1 and 2 
+x = 0 
+combinedvals = []
+while x != len(bincenters)-1 : 
+	combval = int1vals_running_sum[x]/bincenters[x+1] + int2vals_running_sum[-x-1]
+	combinedvals.append(combval)
+	x +=1
+
+combinedvals = np.array(combinedvals)
+Phi_r = -4*np.pi*G*(combinedvals)*np.real(special.sph_harm(0,0,theta,phi))
 
 
 
+#calculate analytic potential now using NFW profile fit parameters #
+                                                                    #
+def potential(x,rho_0,R_s):                                        #
+	G=1																#
+	phi_analytic = -(4*np.pi*G*rho_0*R_s**3*np.log(1+x/R_s))/x		#		 
+	return phi_analytic												#
+																	#
+phi_analytic = potential(r,rho_02,R_s2)							#
+																	#
 
-plt.plot(r,phi,"o")
+# plot of potential from integral and from fit (not saved)																	#
+plt.plot(r,phi_analytic,"o",label='from fit')
+plt.plot(bincenters[1:],Phi_r,label='from integral')										#
+plt.xlabel(r"$r$ [kpc]")											#
+plt.ylabel(r'$\Phi$')	
+plt.title("Analytic potential and from integral, $l=0$")
+plt.legend(fontsize = '8')
+plt.show()
+plt.clf()
+											
+
+#plot of potential from integral
+plt.plot(bincenters[1:],Phi_r)
 plt.xlabel(r"$r$ [kpc]")
 plt.ylabel(r'$\Phi$')
-plt.show()
+plt.title("from integral, $l=0$ case")
+plt.savefig(savefilepath6)
+#plt.show()
+plt.clf()
+
+# general case (l not neccicarily zero)
 
 
 
@@ -209,11 +285,43 @@ plt.show()
 
 
 
-#print(popt)
-#print(rho_0)
-#print(R_s)
 
 
+
+
+
+
+
+
+
+
+
+
+
+# old routines not currently needed 
+
+
+#####################################################################
+# calculate analytic potential now using NFW profile fit parameters #
+                                                                    #
+#def potential(x,rho_0,R_s):                                        #
+#	G=1																#
+#	phi_analytic = -(4*np.pi*G*rho_0*R_s**3*np.log(1+x/R_s))		#		 
+#	return phi_analytic												#
+																	#
+#phi_analytic = potential(r,rho_01,R_s1)							#
+																	#
+																	#
+#plt.plot(r,phi_analytic,"o")										#
+#plt.xlabel(r"$r$ [kpc]")											#
+#plt.ylabel(r'$\Phi$')												#
+#plt.title("from fit of density paramaters")						#
+#plt.show()															#
+#plt.clf()															#
+#####################################################################
+
+
+###################################
 # Check of bin centers and counts #
 # not included in code normally   #
 #plt.plot(bincenters,counts)      #
