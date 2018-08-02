@@ -179,37 +179,6 @@ plt.savefig(savefilepath2)
 #plt.show()
 plt.clf()
 
-################ (code between these two lines can be erased when finisdhed )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#############
 
 #calculate generally the potential
 
@@ -262,7 +231,7 @@ for l in L:
 				combinedvals = np.array(combinedvals)
 
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals#*np.real((1/(1j*np.sqrt(2)))*(special.sph_harm(l,-m,theta,phi)-(-1)**m*special.sph_harm(l,m,theta,phi)))
+				phi_comb = 4*np.pi*G*combinedvals*np.real((1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi)))
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
@@ -287,7 +256,7 @@ for l in L:
 					x +=1 
 				combinedvals = np.array(combinedvals)
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals#*np.real(special.sph_harm(l,m,theta,phi))
+				phi_comb = 4*np.pi*G*combinedvals*np.real(special.sph_harm(m,l,theta,phi))
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
@@ -308,7 +277,7 @@ for l in L:
 					x +=1 
 				combinedvals = np.array(combinedvals)
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals#*np.real((1/(np.sqrt(2)))*(special.sph_harm(l,m,theta,phi)+(-1)**m*special.sph_harm(l,-m,theta,phi)))
+				phi_comb = 4*np.pi*G*combinedvals*np.real((1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi)))
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
