@@ -20,7 +20,9 @@ m,x,y,z,vx,vy,vz = np.loadtxt(loadhalopath,skiprows=1,unpack= True)
 # x,y,z is position in kpc 
 # vx,vy,vz is velocity in units of 100 km/s
 
-
+print(max(m))
+print(min(m))
+print(m)
 # name of galaxy simulation for title of plots / savefilepath
 galaxy = "model_A_spherical_halo_BW2018b"
 
@@ -46,11 +48,11 @@ savefilepath3 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plot
 # phi runs from 0 to pi 
 
 G = 1
-l_max = 3
+l_max = 2
 
 # position on galaxy (in radians)
-theta = 1
-phi = 1
+theta = 0
+phi = 0
 
 
 ########################################################################################################################################################################
@@ -190,6 +192,8 @@ while a <= l_max:
 	a += 1
 L = np.array(L)
 
+# need to check limit of m in real sperical harmonic case
+
 # make list of m 
 b = -l_max 
 M = []
@@ -197,6 +201,12 @@ while b <= l_max:
 	M.append(b)
 	b += 1
 M = np.array(M)
+
+######### just for testing
+L= [1]
+M= [0]
+
+##########
 
 # compute equation (Binney and Tremaine integral (2-122), 1st Ed.)
 
@@ -211,7 +221,7 @@ for l in L:
 		# function for integral2 
 		func2 = density/bincenters**(l-1)
 
-		if m <= l:
+		if np.absolute(m) <= l:
 
 			if m < 0 :
 		
@@ -225,13 +235,13 @@ for l in L:
 				x = 0 
 				combinedvals = []
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters**(l)
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
 
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals*np.real((1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi)))
+				phi_comb = (-4*np.pi*G*combinedvals*np.real((1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi))))/(2*l+1)
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
@@ -251,17 +261,18 @@ for l in L:
 				combinedvals = []
 
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters**(l)
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]#*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals*np.real(special.sph_harm(m,l,theta,phi))
+				phi_comb =(-4*np.pi*G*combinedvals*np.real(special.sph_harm(m,l,theta,phi)))/(2*l+1)
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
 
 			elif m > 0:
+
 				#term 1
 				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
 
@@ -272,12 +283,12 @@ for l in L:
 				x = 0 
 				combinedvals = []
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters**(l)
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]#*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
 				#compute the potential term for this l and m comb
-				phi_comb = 4*np.pi*G*combinedvals*np.real((1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi)))
+				phi_comb = (-4*np.pi*G*combinedvals*np.real((1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi))))/(2*l+1)
 				# append all the contributions of phi into another list of the phi
 				phi_contribution.append(phi_comb)
 
@@ -286,8 +297,42 @@ for l in L:
 			zero_array = np.zeros(len(bincenters[1:]))
 			phi_contribution.append(zero_array)
 
-print(phi_contribution)	
-print(len(phi_contribution))
+
+phi_contribution_sum = np.sum(phi_contribution, axis=0)
+
+
+
+
+
+
+plt.plot(bincenters[1:],phi_contribution_sum)
+plt.plot(bincenters[1:],Phi_r,'o')
+plt.xlabel(r"$r$ [kpc]")
+plt.ylabel(r'$\Phi$')
+plt.title("from integral, $l=1$ case")
+#plt.savefig(savefilepath2)
+#plt.show()
+plt.clf()
+
+
+#print(phi_contribution_sum)
+#print("")
+#print(Phi_r)
+#print(L)
+#print(M)
+
+
+
+
+
+
+
+
+
+#print(phi_contribution)	
+#print(len(phi_contribution))
+#print(Phi_r)
+
 
 
 
