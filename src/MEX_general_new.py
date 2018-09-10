@@ -51,7 +51,7 @@ savefilepath3 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plot
 
 
 G = 1
-l_max = 0
+l_max = 5
 theta = 0
 phi = 0
 
@@ -160,8 +160,8 @@ M = np.array(M)
 
 
 # for testing
-L = [1]
-M = [0]
+#L = [1]
+#M = [0]
 ##############
 
 
@@ -213,14 +213,15 @@ for l in L:
 				#term 1
 				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
 
-				# term 2 
-				int2valrunningsum = integrate.cumtrapz(func2,bincenters)
+				# term 2 needs to be calculated in following loop
+				
 
 				# now we compute the value of the integrals combining term 1 and 2
 				x = 0 
 				combinedvals = []
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters[x+1]**(l)
+					int2valrunningsum = integrate.cumtrapz(func2[x:],bincenters[x:])
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
@@ -272,15 +273,16 @@ for l in L:
 				#term 1
 				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
 
-				# term 2 
-				int2valrunningsum = integrate.cumtrapz(func2,bincenters)
+				# term 2 needs to be calculated in following loop
+		
 
 				# now we compute the value of the integrals combining term 1 and 2
 				x = 0 
 				combinedvals = []
 
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters[x+1]**(l)
+					int2valrunningsum = integrate.cumtrapz(func2[x:],bincenters[x:])
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
@@ -330,14 +332,14 @@ for l in L:
 				#term 1
 				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
 
-				# term 2 
-				int2valrunningsum = integrate.cumtrapz(func2,bincenters)
-
+				# term 2 needs to be calculated in following loop
+				
 				# now we compute the value of the integrals combining term 1 and 2
 				x = 0 
 				combinedvals = []
 				while x != len(bincenters)-1 : 
-					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[-x-1]*bincenters[x+1]**(l)
+					int2valrunningsum = integrate.cumtrapz(func2[x:],bincenters[x:])
+					combval = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l)
 					combinedvals.append(combval)
 					x +=1 
 				combinedvals = np.array(combinedvals)
@@ -375,7 +377,7 @@ plt.xlabel(r"$r$ [kpc]")
 plt.ylabel(r'$\Phi$')	
 plt.title("MEX, $l=0$")
 plt.xlim(0,max(r_trunc))
-#plt.show()
+plt.show()
 plt.clf()
 
 
