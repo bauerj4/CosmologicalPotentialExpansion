@@ -35,13 +35,6 @@ n1 = 33
 # file paths for saving density profile fit and parmaters / potnential
 #chnage file paths as required  
 
-# best fit of desity profile overlayed log(rho) vs log(r) format without ignoring points
-savefilepath1 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/MEX_potential_code_plots/densityprofilefit.eps" %(galaxy)
-# integral of potential spherical case
-savefilepath2 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/MEX_potential_code_plots/potential_int.eps" %(galaxy)
-# potneital from integral anf from denisty profile fit
-savefilepath3 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plots/%s_plots/MEX_potential_code_plots/potential_int_analytic_overlayed.eps" %(galaxy)
-
 
 # MEX potentil (Binney and Tremaine integral (2-122), 1st Ed.)
 
@@ -51,9 +44,9 @@ savefilepath3 = "/Users/Scott/Desktop/GitHub/CosmologicalPotentialExpansion/plot
 
 
 G = 1
-l_max = 5
-theta = 0
-phi = 0
+l_max = 3
+theta = 2*np.pi
+phi = np.pi
 
 # position on galaxy for potential is in radians
 # the potential will be dined along the directions of the theta and phi bin centers
@@ -71,7 +64,7 @@ r = (x**2+y**2+z**2)**(0.5)
 # r is the radius of the particles in units of kpc 
                                                    
 # max radial bin                                   
-max_bin = np.log10(500)  #np.log10(max(r))                               
+max_bin = np.log10(1000)  #np.log10(max(r))                               
 
 # make logarithimically spaced radial bins
 linear_space = np.linspace(0,max_bin,n1)
@@ -353,7 +346,7 @@ for l in L:
 			zero_array = np.zeros(len(bincenters[1:]))
 			phi_contribution.append(zero_array)
 
-print(int2valrunningsum)
+
 
 # sum each contribtuion term by term to get total potential
 phi_contribution_sum = np.sum(phi_contribution, axis=0)
@@ -364,20 +357,22 @@ interpolate_potential = interpolate.interp1d(bincenters[1:],phi_contribution_sum
 #potential_returned = interpolate_potential(radius)
 
 
-xnew = np.linspace(bincenters[1],max(r_trunc),100)
+xnew = np.linspace(bincenters[1],max(bincenters),100)
 
 #print(phi_contribution_sum)
 
 
+# savefilepath for potential at various l,theta,phi
+savefilepath = "/Users/Scott/Desktop/potential_plot/l_%s_theta_%s_phi_%s.eps" %(l_max,theta,phi)
 
 # plot of potential from integral and from interpolation 																
 plt.plot(bincenters[1:],phi_contribution_sum)
-plt.plot(xnew,interpolate_potential(xnew))										
+#plt.plot(xnew,interpolate_potential(xnew))										
 plt.xlabel(r"$r$ [kpc]")											
 plt.ylabel(r'$\Phi$')	
-plt.title("MEX, $l=0$")
-plt.xlim(0,max(r_trunc))
-plt.show()
+plt.title(r"MEX Potential, $l=%s$, $\theta = %s$, $\phi = %s$"  %(l_max,theta,phi))
+plt.savefig(savefilepath)
+#plt.show()
 plt.clf()
 
 
