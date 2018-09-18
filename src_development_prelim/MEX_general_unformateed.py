@@ -144,6 +144,7 @@ while b <= l_max:
 M = np.array(M)
 
 # compute equation (Binney and Tremaine integral (2-122), 1st Ed.), as well radial basis functions
+# calculate forces F_r, F_theta, F_phi as well, analytically from potential equation 
 # defined in latex document 
 
 #phi_contribution is the contribution to potnetial from each l,m possibility
@@ -153,8 +154,8 @@ M = np.array(M)
 
 
 # for testing
-#L = [1]
-#M = [0]
+L = [0]
+M = [0]
 ##############
 
 
@@ -345,10 +346,17 @@ for l in L:
 
 			zero_array = np.zeros(len(bincenters[1:]))
 			phi_contribution.append(zero_array)
+			#F_r_contribution.append(zero_array)
+			#F_theta_contribution.append(zero_array)
+			#F_phi_contribution.append(zero_array)
 
-
+print(density)
 
 # sum each contribtuion term by term to get total potential
+#F_r = np.sum(F_r_contribution, axis=0)
+#F_theta = np.sum(F_theta_contribution, axis=0)
+#F_phi = np.sum(F_phi_contribution, axis=0)
+
 phi_contribution_sum = np.sum(phi_contribution, axis=0)
 
 # interpolate data to return potential at point wanted
@@ -367,11 +375,11 @@ savefilepath = "/Users/Scott/Desktop/potential_plot/l_%s_theta_%s_phi_%s.eps" %(
 
 # plot of potential from integral and from interpolation 																
 plt.plot(bincenters[1:],phi_contribution_sum)
-#plt.plot(xnew,interpolate_potential(xnew))										
+plt.plot(xnew,interpolate_potential(xnew))										
 plt.xlabel(r"$r$ [kpc]")											
 plt.ylabel(r'$\Phi$')	
 plt.title(r"MEX Potential, $l=%s$, $\theta = %s$, $\phi = %s$"  %(l_max,theta,phi))
-plt.savefig(savefilepath)
+#plt.savefig(savefilepath)
 #plt.show()
 plt.clf()
 
