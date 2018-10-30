@@ -114,7 +114,7 @@ plt.xlabel(r"$\log(r)$")
 plt.ylabel(r"$\log($"r'$\rho$'")")
 plt.legend()
 plt.title("Density profile %s with fit, no points ignored" %(galaxy))
-plt.savefig(savefilepath1)
+#plt.savefig(savefilepath1)
 #plt.show()
 plt.clf()
 
@@ -161,14 +161,14 @@ phi_analytic = potential(r,rho_02,R_s2)
 																	
 
 # plot of potential from integral and from fit																
-plt.plot(r,phi_analytic,label='from fit')
+plt.plot(r,phi_analytic,'o',label='from fit')
 plt.plot(bincenters[1:],Phi_r,label='from integral')										
 plt.xlabel(r"$r$ [kpc]")											
 plt.ylabel(r'$\Phi$')	
 plt.title("Analytic potential and from integral, $l=0$")
 plt.legend(fontsize = '8')
-plt.savefig(savefilepath3)
-#plt.show()
+#plt.savefig(savefilepath3)
+plt.show()
 plt.clf()
 											
 
@@ -177,8 +177,8 @@ plt.plot(bincenters[1:],Phi_r)
 plt.xlabel(r"$r$ [kpc]")
 plt.ylabel(r'$\Phi$')
 plt.title("from integral, $l=0$ case")
-plt.savefig(savefilepath2)
-#plt.show()
+#plt.savefig(savefilepath2)
+plt.show()
 plt.clf()
 
 

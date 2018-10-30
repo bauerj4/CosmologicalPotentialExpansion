@@ -256,8 +256,8 @@ def MEX_integral_lm_potential(l_max,basis_functions,bincenters):
 
 				for i in range(len(bincenters)-1):
 					
-					this_contrib_1 = integrate.trapz([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
-					this_contrib_2 = integrate.trapz([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
 
 					int_1 += [this_contrib_1 + int_1[-1]]
 					int_2 += [this_contrib_2 + int_2[-1]]
@@ -319,7 +319,7 @@ def MEX_integral_lm_force_r(l_max,basis_functions,bincenters):
 
 	for l in L:
 		for m in M: 
-		
+			
 
 			if np.absolute(m) <= l:
 				
@@ -329,32 +329,44 @@ def MEX_integral_lm_force_r(l_max,basis_functions,bincenters):
 				# function for integral2 
 				func2 = basis_functions[count]/(bincenters**(l-1))
 
-				#term 1
-				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
+				#counter is just for basis_func calling
+				count +=1	
 
-				# term 2 needs to be calculated in following loop
+
+				int_1 = [0]
+				int_2 = [0]
+
+				for i in range(len(bincenters)-1):
 					
+					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
 
-				# now we compute the value of the integrals combining term 1 and 2
-				x = 0 
-				combinedvals = []
-				while x != len(bincenters)-1 : 
-					int2valrunningsum = integrate.cumtrapz(func2[x:],bincenters[x:])
-					combval = -(l+1)*(int1valrunningsum[x]/bincenters[x+1]**(l+2)) + l*int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l-1)
-					combinedvals.append(combval)
-					x +=1 
-				combinedvals = np.array(combinedvals)
+					int_1 += [this_contrib_1 + int_1[-1]]
+					int_2 += [this_contrib_2 + int_2[-1]]
 
-				# append combinevals into int_lm
+				# need to do this to combine terms to find total int_lm
+				int_1 = int_1[1:]
+				int_2 = int_2[1:]
+				bincenters = bincenters[1:]
+				int_1 = np.array(int_1)
+				int_2 = np.array(int_2)
+				bincenters = np.array(bincenters)
+				
+				# now modify int_2 to subtract integral from 0 --> r, making it r --> inf
+				# append 0 at beggining of Array, and then remove last elemnt of int_2
+				int_2_modified = np.insert(int_2,0,0) 
+				int_2_modified = int_2_modified[:-1]
+				
+				# combine the terms now
+				int_lm_cont = (-(l+1)/(bincenters**(l+2)))*int_1 + (l*bincenters**(l-1))*(int_2[-1]-int_2_modified)
 
-				int_lm.append(combinedvals)
-
-
-				count += 1
+				int_lm.append(int_lm_cont)
 
 			else:
 
-				pass
+				pass		
+
+			
 
 	return(int_lm)
 
@@ -398,42 +410,52 @@ def MEX_integral_lm_force_potential(l_max,basis_functions,bincenters):
 				# function for integral2 
 				func2 = basis_functions[count]/(bincenters**(l-1))
 
-				#term 1
-				int1valrunningsum = integrate.cumtrapz(func1,bincenters)
+				#counter is just for basis_func calling
+				count +=1	
 
-				# term 2 needs to be calculated in following loop
-					
 
-				# now we compute the value of the integrals combining term 1 and 2
-				x = 0 
-				combinedvals1 = []
-				combinedvals2 = []
-				while x != len(bincenters)-1 : 
-					int2valrunningsum = integrate.cumtrapz(func2[x:],bincenters[x:])
-					combval1 = int1valrunningsum[x]/bincenters[x+1]**(l+1) + int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l)
-					combval2 = -(l+1)*(int1valrunningsum[x]/bincenters[x+1]**(l+2)) + l*int2valrunningsum[len(int2valrunningsum)-1]*bincenters[x+1]**(l-1)
-					combinedvals1.append(combval1)
-					combinedvals2.append(combval2)
-					x +=1
+				int_1 = [0]
+				int_2 = [0]
+
+				for i in range(len(bincenters)-1):
 					
-					#print(int2valrunningsum[len(int2valrunningsum)-1]+int1valrunningsum[0]) 
+					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
+
+					int_1 += [this_contrib_1 + int_1[-1]]
+					int_2 += [this_contrib_2 + int_2[-1]]
+
+				# need to do this to combine terms to find total int_lm
+				int_1 = int_1[1:]
+				int_2 = int_2[1:]
+				bincenters = bincenters[1:]
+				int_1 = np.array(int_1)
+				int_2 = np.array(int_2)
+				bincenters = np.array(bincenters)
 				
+				# now modify int_2 to subtract integral from 0 --> r, making it r --> inf
+				# append 0 at beggining of Array, and then remove last elemnt of int_2
+				int_2_modified = np.insert(int_2,0,0) 
+				int_2_modified = int_2_modified[:-1]
+				
+				
+				# combine the terms now
+				
+				#force in r 
+				int_lm_cont2 = (-(l+1)/(bincenters**(l+2)))*int_1 + (l*bincenters**(l-1))*(int_2[-1]-int_2_modified)
+				# potential and force in theta/phi
+				int_lm_cont1 = (1/(bincenters**(l+1)))*int_1 + (bincenters**(l))*(int_2[-1]-int_2_modified)
 
-				combinedvals1 = np.array(combinedvals1)
-				combinedvals2 = np.array(combinedvals2)
 
-
-				# append combinevals into int_lm
-
-				int_lm1.append(combinedvals1)
-				int_lm2.append(combinedvals2)
-
-
-				count += 1
+				int_lm2.append(int_lm_cont2)
+				int_lm1.append(int_lm_cont1)
 
 			else:
 
-				pass
+				pass		
+
+			
+			
 
 	return(int_lm1,int_lm2)
 
