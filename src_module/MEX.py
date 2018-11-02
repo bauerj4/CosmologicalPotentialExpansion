@@ -18,7 +18,7 @@ def LoadHalo(loadhalopath):
 
 	mass,x,y,z,vx,vy,vz = np.loadtxt(loadhalopath,skiprows=1,unpack= True) 
 	# need to calculate the radius each partcile is at 
-	r = (x**2+y**2+z**2)**(0.5)  
+	r = np.sqrt((x*x+y*y+z*z))  
 	# calculate positions of particle in spherical coordinates (theta_pos and phi_pos)
 	theta_pos = np.arctan2(y,x)
 
@@ -45,7 +45,7 @@ def LoadHalo(loadhalopath):
 
 # r is radius of partciles [array] from LoadHalo, n is number of bins in r, logarithimcally
 #max_r is the max radius you want the halo to subtend to over all time steps
-def bin_r_log(r,n,max_r):
+def bin_r_log(radius,n,max_r):
 	n1 = n + 1
 	# max radial bin                                   
 	max_bin = np.log10(max_r)
@@ -54,12 +54,12 @@ def bin_r_log(r,n,max_r):
 	log_bins = 10**(linear_space)
 	bincenters = 0.5*(log_bins[1:]+log_bins[:-1])
 	# convert the r data to the corresponding bin center the ppoint falls in, only for r
-	r_trunc = r
+	r_trunc = np.copy(radius)
 	i = 0
 	while i < len(bincenters):
 
 		count = 0
-		for x in r: 
+		for x in radius: 
 
 			if log_bins[i] <= x < log_bins[i+1]:
 
@@ -75,6 +75,142 @@ def bin_r_log(r,n,max_r):
 
 	return(bincenters,r_trunc,log_bins)
 
+# calculate the radial basis functions 
+# uses true particle r not truncated r 
+# listed in list as (0,0), (1,-1), (1,0),(1,1),(2,-2) .......
+def basis_function_mod(l_max, bincenters, log_bins,r, r_trunc, mass, theta_pos, phi_pos):
+	# make list of l,m
+	# make list of l
+	a = 0 
+	L = []
+	while a <= l_max:
+		L.append(a)
+		a += 1
+	L = np.array(L)
+
+	# make list of m 
+	b = -l_max 
+	M = []
+	while b <= l_max:
+		M.append(b)
+		b += 1
+	M = np.array(M)
+
+	# compute radial bin widths, for calculation of basis functions
+	deltar = []
+	for i in range(len(log_bins)-1):
+		width = (log_bins[i+1] - log_bins[i])
+		deltar.append(width)
+	
+
+	# calculate basis functions
+	basis_functions = []
+	for l in L:
+		for m in M: 
+		
+
+			if np.absolute(m) <= l:
+
+				if m == 0 :
+					density = []
+					i = 0
+					
+					while i < len(bincenters):
+
+						density_cont = []
+	
+						count=0
+						for x in r_trunc:
+
+							if x == bincenters[i]:
+
+								term = (1/(r[count]**2*deltar[i]))*mass[count]*np.real((special.sph_harm(m,l,theta_pos[count],phi_pos[count])).conjugate())
+
+								density_cont.append(term)
+
+								
+
+
+
+							else:
+								pass
+
+							count += 1 
+
+						density.append(sum(density_cont))
+
+						i += 1 
+						
+					basis_functions.append(density)
+
+				elif m < 0 :
+
+					density = []
+					i = 0 
+					while i < len(bincenters):
+
+						density_cont = []
+	
+						count = 0
+						for x in r_trunc:
+
+							if x == bincenters[i]:
+
+								term = (1/(r[count]**2*deltar[i]))*mass[count]* np.real(((1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta_pos[count],phi_pos[count])-(-1)**m*special.sph_harm(m,l,theta_pos[count],phi_pos[count]))).conjugate())
+								density_cont.append(term)
+
+								
+
+
+
+							else:
+								pass
+
+							count += 1 
+
+						density.append(sum(density_cont))
+
+
+						i += 1 
+
+					basis_functions.append(density)
+
+
+				elif m > 0:
+
+					density = []
+					i = 0 
+					while i < len(bincenters):
+
+						density_cont = []
+	
+						count = 0
+						for x in r_trunc:
+
+							if x == bincenters[i]:
+
+								term = (1/(r[count]**2*deltar[i]))*mass[count]* np.real(((1/(np.sqrt(2)))*(special.sph_harm(m,l,theta_pos[count],phi_pos[count])+(-1)**m*special.sph_harm(-m,l,theta_pos[count],phi_pos[count]))).conjugate())
+
+								density_cont.append(term)
+
+								
+
+
+
+							else:
+								pass
+
+							count += 1 
+
+						density.append(sum(density_cont))
+
+						
+						i += 1 
+
+					basis_functions.append(density)
+
+
+	return(basis_functions)
 
 
 # calculate the radial basis functions 
