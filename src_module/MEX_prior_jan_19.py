@@ -1,5 +1,3 @@
-# last updated: FEB 8/19
-
 # this code calculates MEX potential
 import numpy as np
 import matplotlib.pyplot as plt
@@ -77,40 +75,8 @@ def bin_r_log(radius,n,max_r):
 
 	return(bincenters,r_trunc,log_bins)
 
-# r is radius of partciles [array] from LoadHalo, n is number of bins in r, linear space
-#max_r is the max radius you want the halo to subtend to over all time steps
-def bin_r(radius,n,max_r):
-	n1 = n + 1
-	# max radial bin                                   
-	max_bin = max_r
-	# make linear spaced radial bins
-	linear_space = np.linspace(0,max_bin,n1)
-	log_bins = linear_space
-	bincenters = 0.5*(log_bins[1:]+log_bins[:-1])
-	# convert the r data to the corresponding bin center the ppoint falls in, only for r
-	r_trunc = np.copy(radius)
-	i = 0
-	while i < len(bincenters):
-
-		count = 0
-		for x in radius: 
-
-			if log_bins[i] <= x < log_bins[i+1]:
-
-				r_trunc[count] = bincenters[i]
-
-
-			else:
-				pass 
-		
-			count += 1 		
-
-		i += 1
-
-	return(bincenters,r_trunc,log_bins)
-
 # calculate the radial basis functions 
-# uses true particle r not truncated r in basis func calculation
+# uses true particle r not truncated r 
 # listed in list as (0,0), (1,-1), (1,0),(1,1),(2,-2) .......
 def basis_function_mod(l_max, bincenters, log_bins,r, r_trunc, mass, theta_pos, phi_pos):
 	# make list of l,m
@@ -462,12 +428,193 @@ def MEX_integral_lm_potential(l_max,basis_functions,bincenters):
 	return(int_lm)
 
 
+# this int_lm only works for the forces, int_lm1 radial, int_lm2 theta/phi
+def MEX_integral_lm_force_r(l_max,basis_functions,bincenters):
 
-# USE THIS FUNCTION TO FIND POTENTIAL AT INDIVIDUAL POINTS
+	
+	# make list of l
+	a = 0 
+	L = []
+	while a <= l_max:
+		L.append(a)
+		a += 1
+	L = np.array(L)
+
+	# make list of m 
+	b = -l_max 
+	M = []
+	while b <= l_max:
+		M.append(b)
+		b += 1
+	M = np.array(M) 
+
+	# calculate each integral contribution for lm, to be summed in potential function 
+	int_lm = []
+
+	# counter to get basis function for each l,m 
+	count = 0
+
+	for l in L:
+		for m in M: 
+			
+
+			if np.absolute(m) <= l:
+				
+				
+				# function for integral1 
+				func1 = basis_functions[count]*bincenters**(l+2)
+				# function for integral2 
+				func2 = basis_functions[count]/(bincenters**(l-1))
+
+				#counter is just for basis_func calling
+				count +=1	
+
+
+				int_1 = [0]
+				int_2 = [0]
+
+				for i in range(len(bincenters)-1):
+					
+					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
+
+					int_1 += [this_contrib_1 + int_1[-1]]
+					int_2 += [this_contrib_2 + int_2[-1]]
+
+				# need to do this to combine terms to find total int_lm
+				int_1 = int_1[1:]
+				int_2 = int_2[1:]
+				bincenters1 = bincenters[1:]
+				int_1 = np.array(int_1)
+				int_2 = np.array(int_2)
+				bincenters1 = np.array(bincenters1)
+				
+				# now modify int_2 to subtract integral from 0 --> r, making it r --> inf
+				# append 0 at beggining of Array, and then remove last elemnt of int_2
+				int_2_modified = np.insert(int_2,0,0) 
+				int_2_modified = int_2_modified[:-1]
+				
+				# combine the terms now
+				# radial force
+				int_lm_cont1 = (-(l+1)/(bincenters1**(l+2)))*int_1 + (l*bincenters1**(l-1))*(int_2[-1]-int_2_modified)
+				# theta/phi forces
+				int_lm_cont2 = (1/(bincenters1**(l+2)))*int_1 + (bincenters1**(l-1))*(int_2[-1]-int_2_modified)
+
+
+				int_lm1.append(int_lm_cont1)
+				int_lm2.append(int_lm_cont2)
+
+			else:
+
+				pass		
+
+			
+
+	return(int_lm1, int_lm2)
+
+
+# returns inetgarls for both force and potentials , int_lm1 is for potential ... int_lm2 is for r force only .. int_lm3 if for theta/phi force
+def MEX_integral_lm_force_potential(l_max,basis_functions,bincenters):
+
+	
+	# make list of l
+	a = 0 
+	L = []
+	while a <= l_max:
+		L.append(a)
+		a += 1
+	L = np.array(L)
+
+	# make list of m 
+	b = -l_max 
+	M = []
+	while b <= l_max:
+		M.append(b)
+		b += 1
+	M = np.array(M) 
+
+	# calculate each integral contribution for lm, to be summed in potential function 
+	int_lm1 = []
+	int_lm2 = []
+	int_lm3 = []
+
+	# counter to get basis function for each l,m 
+	count = 0
+
+	for l in L:
+		for m in M: 
+		
+
+			if np.absolute(m) <= l:
+				
+				
+				# function for integral1 
+				func1 = basis_functions[count]*bincenters**(l+2)
+				# function for integral2 
+				func2 = basis_functions[count]/(bincenters**(l-1))
+
+				#counter is just for basis_func calling
+				count +=1	
+
+
+				int_1 = [0]
+				int_2 = [0]
+
+				for i in range(len(bincenters)-1):
+					
+					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
+					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
+
+					int_1 += [this_contrib_1 + int_1[-1]]
+					int_2 += [this_contrib_2 + int_2[-1]]
+
+				# need to do this to combine terms to find total int_lm
+				int_1 = int_1[1:]
+				int_2 = int_2[1:]
+				bincenters1 = bincenters[1:]
+				int_1 = np.array(int_1)
+				int_2 = np.array(int_2)
+				bincenters1 = np.array(bincenters1)
+				
+				# now modify int_2 to subtract integral from 0 --> r, making it r --> inf
+				# append 0 at beggining of Array, and then remove last elemnt of int_2
+				int_2_modified = np.insert(int_2,0,0) 
+				int_2_modified = int_2_modified[:-1]
+				
+				
+				# combine the terms now
+				
+				#force in r 
+				int_lm_cont2 = (-(l+1)/(bincenters1**(l+2)))*int_1 + (l*bincenters1**(l-1))*(int_2[-1]-int_2_modified)
+				# potential 
+				int_lm_cont1 = (1/(bincenters1**(l+1)))*int_1 + (bincenters1**(l))*(int_2[-1]-int_2_modified)
+				# force in theta/phi
+				int_lm_cont3 = (1/(bincenters1**(l+2)))*int_1 + (bincenters1**(l-1))*(int_2[-1]-int_2_modified)
+
+
+
+				int_lm2.append(int_lm_cont2)
+				int_lm1.append(int_lm_cont1)
+				int_lm3.append(int_lm_cont3)
+
+			else:
+
+				pass		
+
+			
+			
+
+	return(int_lm1, int_lm2, int_lm3)
+
+
+
+
+
 # calculate the potential now function 
 # theta, phi: is where you want the potential gven for 
 # l_max must be the same as basis_function and MEX_integral_lm 
 #  (theta, phi) correspond to particle of interest 
+
 def MEX_potential(l_max,theta, phi, bincenters, int_lm):
 	
 	G = 1
@@ -546,129 +693,22 @@ def MEX_potential(l_max,theta, phi, bincenters, int_lm):
 
 
 
-# everything above this point works as it should
-
-
-#############################################################################################
-
-# ATTEMPT AT ANALYTIC FORCE, DOES NOT WORK AS OF JAN 24/19
-
-
-
-# this int_lm only works for the forces, int_lm1 radial, int_lm2 theta/phi
-def MEX_integral_lm_force(l_max,basis_functions,bincenters):
-
-	
-	# make list of l
-	a = 0 
-	L = []
-	while a <= l_max:
-		L.append(a)
-		a += 1
-	L = np.array(L)
-
-	# make list of m 
-	b = -l_max 
-	M = []
-	while b <= l_max:
-		M.append(b)
-		b += 1
-	M = np.array(M) 
-
-	# calculate each integral contribution for lm, to be summed in potential function 
-	int_lm1 = []
-	int_lm2 = []
-
-	# counter to get basis function for each l,m 
-	count = 0
-
-	for l in L:
-		for m in M: 
-			
-
-			if np.absolute(m) <= l:
-				
-				
-				# function for integral1 
-				func1 = basis_functions[count]*bincenters**(l+2)
-				# function for integral2 
-				func2 = basis_functions[count]/(bincenters**(l-1))
-
-				#counter is just for basis_func calling
-				count +=1	
-
-
-				int_1 = [0]
-				int_2 = [0]
-
-				for i in range(len(bincenters)-1):
-					
-					this_contrib_1 = integrate.simps([func1[i],func1[i+1]],[bincenters[i],bincenters[i+1]])
-					this_contrib_2 = integrate.simps([func2[i],func2[i+1]],[bincenters[i],bincenters[i+1]])
-
-					int_1 += [this_contrib_1 + int_1[-1]]
-					int_2 += [this_contrib_2 + int_2[-1]]
-
-				# need to do this to combine terms to find total int_lm
-				int_1 = int_1[1:]
-				int_2 = int_2[1:]
-				bincenters1 = bincenters[1:]
-				int_1 = np.array(int_1)
-				int_2 = np.array(int_2)
-				bincenters1 = np.array(bincenters1)
-				
-				# now modify int_2 to subtract integral from 0 --> r, making it r --> inf
-				# append 0 at beggining of Array, and then remove last elemnt of int_2
-				int_2_modified = np.insert(int_2,0,0) 
-				int_2_modified = int_2_modified[:-1]
-				
-				
-				# radial force
-				int_lm_cont1 = ((-(l+1))/(bincenters1**(l+2)))*int_1 + (l*bincenters1**(l-1))*(int_2[-1]-int_2_modified)
-				# theta/phi forces
-				int_lm_cont2 = (1/(bincenters1**(l+2)))*int_1 + (bincenters1**(l-1))*(int_2[-1]-int_2_modified)
-
-
-				int_lm1.append(int_lm_cont1)
-				int_lm2.append(int_lm_cont2)
-
-			else:
-
-				pass		
-
-			
-
-	return(int_lm1, int_lm2)
-
-
-
-
-
-
-
 # calculate the forces on the particles 
 # int order is same as the function that calculates it 
 # (theta, phi, mass) correspond to the particle of interest
 # int_lm1 is for r force ... int_lm2 is for theta/phi force
-def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
-
-	# fudge factor for discontinuties 
-	if phi < 0.0000001:
-		phi = 0.0000001
-	else: 
-		pass
-
+def MEX_force(l_max, theta, phi, mass, bincenters , int_lm1, int_lm2):
 
 	# make function spherical harmonic derivative with respect to phi  (theta physics convention)
 	def sph_harm_deriv(m,l,theta,phi):
 		
 		if l == m : 
 			
-			d_phi = (m*(np.cos(phi)/np.sin(phi))*special.sph_harm(m,l,theta,phi)) 
+			d_phi = m*(1/np.tan(phi))*special.sph_harm(m,l,theta,phi) 
 
 		else:
 
-			d_phi = (m*(np.cos(phi)/np.sin(phi))*special.sph_harm(m,l,theta,phi)) + (np.sqrt((l-m)*(l+m+1))*np.e**(-1j*theta)*special.sph_harm(m+1,l,theta,phi))
+			d_phi = m*(1/np.tan(phi))*special.sph_harm(m,l,theta,phi) + np.sqrt((l-m)*(l+m+1))*np.e**(-1j*theta)*special.sph_harm(m+1,l,theta,phi)
 
 		return(d_phi)
 	
@@ -698,7 +738,6 @@ def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
 	F_theta = []
 	F_phi = []
 
-	# removing *mass in f_r etc... finding force per unit mass, accelration, mass indep
 
 	# counter to get basis function for each l,m 
 	count = 0
@@ -712,25 +751,15 @@ def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
 
 				if m < 0 :
 				
-					# spherical harmonic terms for each f_r, f_theta, f_phi  (so f_r, etc, will have same form in each conditional)
-					
-					sph_harm_r = (1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi))
-
-					sph_harm_theta = (1/(1j*np.sqrt(2)))*((-1)*(1j*m)*special.sph_harm(-m,l,theta,phi)-(-1)**m*(1j*m)*special.sph_harm(m,l,theta,phi))
-
-					sph_harm_phi = (1/(1j*np.sqrt(2)))*(sph_harm_deriv(-m,l,theta,phi)-(-1)**m*sph_harm_deriv(m,l,theta,phi))
-
-
-					# now find forces 				
 
 					#compute the radial force
-					f_r = (4*np.pi*G*int_lm1[count]*np.real(sph_harm_r))/(2*l+1)
+					f_r = (mass*4*np.pi*G*int_lm1[count]*np.real((1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi))))/(2*l+1)
 
 					#compute the theta force (phi in physics convention)
-					f_theta = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_theta))/((2*l+1)*np.sin(phi))
+					f_theta = (4*mass*np.pi*G*int_lm2[count]*np.real(1j*m*(1/(1j*np.sqrt(2)))*(special.sph_harm(-m,l,theta,phi)-(-1)**m*special.sph_harm(m,l,theta,phi))))/((2*l+1)*np.sin(phi))
 
 					#compute the phi force (theta in physics convention)
-					f_phi = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_phi))/(2*l+1)
+					f_phi = (4*mass*np.pi*G*int_lm2[count]*np.real((1/(1j*np.sqrt(2)))*(sph_harm_deriv(-m,l,theta,phi)-(-1)**m*sph_harm_deriv(m,l,theta,phi))))/(2*l+1)
 
 					
 
@@ -743,26 +772,16 @@ def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
 
 				elif m == 0 :
 
-					# spherical harmonic terms for each f_r, f_theta, f_phi  (so f_r, etc, will have same form in each conditional)
 					
-					sph_harm_r = special.sph_harm(m,l,theta,phi)
-
-					sph_harm_theta =1j*m*special.sph_harm(m,l,theta,phi)
-
-					sph_harm_phi = sph_harm_deriv(m,l,theta,phi)
-
-
-					# now find forces 				
-
 					#compute the radial force
-					f_r = (4*np.pi*G*int_lm1[count]*np.real(sph_harm_r))/(2*l+1)
+					f_r =(4*mass*np.pi*G*int_lm1[count]*np.real(special.sph_harm(m,l,theta,phi)))/(2*l+1)
 
 					#compute the theta force (phi in physics convention)
-					f_theta = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_theta))/((2*l+1)*np.sin(phi))
+					f_theta = (4*mass*np.pi*G*int_lm2[count]*np.real(1j*m*special.sph_harm(m,l,theta,phi)))/((2*l+1)*np.sin(phi))
 
 					#compute the phi force (theta in physics convention)
-					f_phi = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_phi))/(2*l+1)
-					
+					f_phi = (4*mass*np.pi*G*int_lm2[count]*np.real(sph_harm_deriv(m,l,theta,phi)))/(2*l+1)
+
 
 					F_r.append(f_r)
 					F_theta.append(f_theta)
@@ -772,26 +791,16 @@ def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
 
 				elif m > 0:
 					
-					# spherical harmonic terms for each f_r, f_theta, f_phi  (so f_r, etc, will have same form in each conditional)
 					
-					sph_harm_r = (1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi))
-
-					sph_harm_theta = (1/(np.sqrt(2)))*((1j*m)*special.sph_harm(m,l,theta,phi)+(-1)**m*(-1)*(1j*m)*special.sph_harm(-m,l,theta,phi))
-
-					sph_harm_phi = (1/(np.sqrt(2)))*(sph_harm_deriv(m,l,theta,phi)+(-1)**m*sph_harm_deriv(-m,l,theta,phi))
-
-
-					# now find forces 				
-
 					#compute the radial force
-					f_r = (4*np.pi*G*int_lm1[count]*np.real(sph_harm_r))/(2*l+1)
+					f_r = (4*mass*np.pi*G*int_lm1[count]*np.real((1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi))))/(2*l+1)
 
 					#compute the theta force (phi in physics convention)
-					f_theta = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_theta))/((2*l+1)*np.sin(phi))
+					f_theta = (4*mass*np.pi*G*int_lm2[count]*np.real(1j*m*(1/(np.sqrt(2)))*(special.sph_harm(m,l,theta,phi)+(-1)**m*special.sph_harm(-m,l,theta,phi))))/((2*l+1)*np.sin(phi))
 
 					#compute the phi force (theta in physics convention)
-					f_phi = (4*np.pi*G*int_lm2[count]*np.real(sph_harm_phi))/(2*l+1)
-					
+					phi_comb = (4*mass*np.pi*G*int_lm2[count]*np.real((1/(np.sqrt(2)))*(sph_harm_deriv(m,l,theta,phi)+(-1)**m*sph_harm_deriv(-m,l,theta,phi))))/(2*l+1)
+
 
 
 					
@@ -822,7 +831,6 @@ def MEX_force(l_max, theta, phi, bincenters , int_lm1, int_lm2):
 
 	#returns F_x, F_y, F_z over array Bincenetrs[1:]
 
-	return(F_x,F_y,F_z,F_r,F_phi,F_theta)
-
-
+	return(F_x,F_y,F_z)
+	
 
