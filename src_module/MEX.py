@@ -1,21 +1,20 @@
-# last updated: FEB 8/19
+# Scott Thomas 
+# March 27, 2019
 
 # this code calculates MEX potential
+# as well as particle accelerations 
+
+
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.special as special 
 import scipy.integrate as integrate
 import scipy.interpolate as interpolate
 
-
-# NOTE
-# F_x, F_y, F_z, Potential, are arrays over bincenters[1:]  *****
-
-# function to load halo path and return values in spherical coordinates
-# with theta and phi having correct phase 
  
-# need to put in fudge factors on theta and phi positions for now *************
-
+# loads the halo and particle coordinates
 def LoadHalo(loadhalopath):
 
 	mass,x,y,z,vx,vy,vz = np.loadtxt(loadhalopath,skiprows=1,unpack= True) 
@@ -43,6 +42,33 @@ def LoadHalo(loadhalopath):
 
 	return(mass, r, theta_pos, phi_pos)
 
+# to load halos with accelertaions in file
+def LoadHaloalt(loadhalopath):
+
+	mass,x,y,z,vx,vy,vz,PP,PPP,PPPP = np.loadtxt(loadhalopath,skiprows=1,unpack= True) 
+	# need to calculate the radius each partcile is at 
+	r = np.sqrt((x*x+y*y+z*z))  
+	# calculate positions of particle in spherical coordinates (theta_pos and phi_pos)
+	theta_pos = np.arctan2(y,x)
+
+	phi_pos = np.arccos(z/r)
+
+	# covert theta positions from -pi to pi --> 0 to 2pi 
+
+	theta_pos_correct_phase = []
+
+	for x in theta_pos:
+		if x < 0:
+			X = x + 2*np.pi 
+			theta_pos_correct_phase.append(X)
+		elif x > 0:
+			theta_pos_correct_phase.append(x)
+		elif x == 0:
+			theta_pos_correct_phase.append(x)
+
+	theta_pos = theta_pos_correct_phase
+
+	return(mass, r, theta_pos, phi_pos)
 
 
 # r is radius of partciles [array] from LoadHalo, n is number of bins in r, logarithimcally
@@ -543,15 +569,6 @@ def MEX_potential(l_max,theta, phi, bincenters, int_lm):
 
 
 	return(phi_contribution_sum, phi_contribution)
-
-
-
-# everything above this point works as it should
-
-
-#############################################################################################
-
-# ATTEMPT AT ANALYTIC FORCE, DOES NOT WORK AS OF JAN 24/19
 
 
 
